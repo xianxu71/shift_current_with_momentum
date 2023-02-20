@@ -47,11 +47,13 @@ class optical_responses:
        nevecs = self.exciton.nevecs
        evecs = self.exciton.evecs
        evals = self.exciton.evals
-       peh = read_eh_dipole(self.exciton.nb)  # dim: (ns,3)
+       peh = read_eh_dipole(self.exciton.nb)  # dim: (ns,3) nb order order:  (nv_inverse, nc)
 
        eta = self.eta / Ry2eV
        wrange = self.w / Ry2eV
        brdf = self.brdfunc
+
+       self.int_dipole = 1 # dim [nk, nb, nb, 3]
 
 
 
@@ -67,8 +69,8 @@ class optical_responses:
                print('  Progress: {0:4.1f}%'.format(i / self.exciton.nevecs * 100))
 
            if self.exciton.low_comm:
-               peh_i = peh[i]
                evecs_i = evecs[i]
+               peh_i = peh[i]
            else:
                if i in self.exciton.my_xcts:
                    i_loc = self.exciton.my_xcts.index(i)
@@ -96,7 +98,7 @@ class optical_responses:
                    evecs_j = evecs[j_loc]
                    peh_j = peh[j_loc]
 
-               Pij = 1 # dim 3
+               Pij = self.computeP(evecs_i, evecs_j)
                # Intraband velocity
 
                num1 = np.einsum('a,bc->abc', peh_i, \
@@ -136,3 +138,12 @@ class optical_responses:
                        IO.write_shiftcurrent(tmp, wrange * Ry2eV, sigma0[i, j, l] * au2muAdivV2)
 
        return
+   def computeP(self, evec1, evec2):
+       nvb = evec1.shape[2]
+
+       tmp1 = np.einsum('kcla,klv->kcva', self.int_dipole[0, :, nvb::, nvb::], evec2)
+       tmp1 = tmp1 - np.einsum('klva,kcl->kcva', self.int_dipole[0, :, :nvb, :nvb], evec2)
+
+       Rmn = np.einsum('kcv,kcva->a', evec1.conjugate(), tmp1)
+
+       return Rmn
