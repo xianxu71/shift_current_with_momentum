@@ -1,7 +1,7 @@
 import numpy as np
 from mpi import MPI, comm, size, rank
 import IO
-from math_functions import delta_lorentzian, delta_gaussian
+from math_functions import delta_lorentzian
 from constants import Ry2eV, eRy, eps0, tol5, au2muAdivV2, au2pmdivV, a2bohr, hbar
 from dipole_matrix_read import *
 import time
@@ -16,8 +16,7 @@ class optical_responses:
 
    """
 
-   def __init__(self, QP, w, eta, brdfun='Lorentzian',\
-                tetra=False, exciton=None):
+   def __init__(self, w, eta, brdfun='Lorentzian', exciton=None):
       """
       Initialize the calculation
 
@@ -27,8 +26,7 @@ class optical_responses:
       self.w = np.array(w[:])
       self.nw = len(self.w)
       self.eta = eta
-      
-      self.tetra = tetra
+
 
       # Note: tetrahedron supress broadening options
       if brdfun == 'Lorentzian':
@@ -38,7 +36,7 @@ class optical_responses:
       return
 
    
-   def calc_shift_current_with_eh(self, use_dipole_W90, dipole_W90, fname='xct-shift_current'):
+   def calc_shift_current_with_eh(self, fname='xct-shift_current'):
 
        celvol = self.exciton.celvol
        nfk = self.exciton.nfk
@@ -53,8 +51,9 @@ class optical_responses:
        wrange = self.w / Ry2eV
        brdf = self.brdfunc
 
-       self.int_dipole = 1 # dim [nk, nb, nb, 3]
-
+       self.noeh_dipole = read_noeh_dipole(nfk, ncb+nvb) # dim [nk, nb, nb, 3]
+       self.noeh_dipole = reorder_noeh_dipole(self.noeh_dipole, nvb, ncb, nfk)
+       print('test')
 
 
        pref = -eRy ** 3 / (2 * nfk * celvol)/hbar**2
@@ -141,8 +140,8 @@ class optical_responses:
    def computeP(self, evec1, evec2):
        nvb = evec1.shape[2]
 
-       tmp1 = np.einsum('kcla,klv->kcva', self.int_dipole[0, :, nvb::, nvb::], evec2)
-       tmp1 = tmp1 - np.einsum('klva,kcl->kcva', self.int_dipole[0, :, :nvb, :nvb], evec2)
+       tmp1 = np.einsum('kcla,klv->kcva', self.noeh_dipole[:, nvb::, nvb::], evec2)
+       tmp1 = tmp1 - np.einsum('klva,kcl->kcva', self.noeh_dipole[:, :nvb, :nvb], evec2)
 
        Rmn = np.einsum('kcv,kcva->a', evec1.conjugate(), tmp1)
 

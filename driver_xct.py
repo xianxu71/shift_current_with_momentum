@@ -22,11 +22,10 @@ if __name__ == '__main__':
     omega = np.arange(wmin, wmax + dw, dw)
 
     eta = 0.2
-    tetra = False
     brdfun = 'Lorentzian'
 
-    op = optical_responses.optical_responses(omega, eta, tetra=tetra, \
-                                             brdfun=brdfun, exciton=Xct)
+    op = optical_responses.optical_responses(omega, eta,brdfun=brdfun, exciton=Xct)
+
     start = time.time()
 
     op.calc_shift_current_with_eh()
