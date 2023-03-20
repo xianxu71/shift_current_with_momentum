@@ -31,8 +31,6 @@ class optical_responses:
       # Note: tetrahedron supress broadening options
       if brdfun == 'Lorentzian':
         self.brdfunc = delta_lorentzian
-      else:
-        self.brdfunc = delta_gaussian
       return
 
    
@@ -74,7 +72,7 @@ class optical_responses:
                if i in self.exciton.my_xcts:
                    i_loc = self.exciton.my_xcts.index(i)
                    evecs_i = self.exciton.evecs[i_loc]
-                   peh_i = peh[i_loc]
+                   peh_i = peh[i]
                    if rank != self.exciton.owners[i]:
                        print(i, i_loc, rank, self.exciton.owners[i])
                        raise Exception('Wrong exciton owner')
@@ -95,7 +93,7 @@ class optical_responses:
                    peh_j = peh[j]
                else:
                    evecs_j = evecs[j_loc]
-                   peh_j = peh[j_loc]
+                   peh_j = peh[j]
 
                Pij = self.computeP(evecs_i, evecs_j)
                # Intraband velocity
