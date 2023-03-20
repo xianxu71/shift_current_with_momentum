@@ -1,4 +1,5 @@
 import numpy as np
+from mpi import MPI, comm, size, rank
 
 def read_eh_dipole(nxct):
     '''
@@ -67,9 +68,11 @@ def read_noeh_dipole(nk,nb):
     filename_1 = "vmtxel_nl_b1.dat"
     filename_2 = "vmtxel_nl_b2.dat"
     filename_3 = "vmtxel_nl_b3.dat"
-    vmtxel_sort(filename_1)
-    vmtxel_sort(filename_2)
-    vmtxel_sort(filename_3)
+    if rank == 0:
+        vmtxel_sort(filename_1)
+        vmtxel_sort(filename_2)
+        vmtxel_sort(filename_3)
+    comm.Barrier()
     file_1 = open(filename_1)
     file_2 = open(filename_2)
     file_3 = open(filename_3)
